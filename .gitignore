@@ -1,0 +1,5 @@
+.direnv
+.pre-commit-config.yaml
+result
+result-*
+root.img
