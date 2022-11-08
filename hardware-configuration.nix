@@ -42,5 +42,7 @@
     fsType = "ext4";
   };
 
+  swapDevices = [{ device = "/dev/disk/by-label/swap"; }];
+
   networking.useDHCP = lib.mkDefault true;
 }

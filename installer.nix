@@ -36,23 +36,32 @@
         label: gpt
 
         name=BOOT, size=512MiB, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+        name=SWAP, size=8GiB, type=0657FD6D-A4AB-43C4-84E5-0933C84B4F4F
         name=NIXOS
       END
 
       sync
-      wait-for [ -b /dev/disk/by-partlabel/BOOT ]
 
+      wait-for [ -b /dev/disk/by-partlabel/BOOT ]
       wait-for mkfs.fat -F 32 -n boot /dev/disk/by-partlabel/BOOT
+
+      wait-for [ -b /dev/disk/by-partlabel/SWAP ]
+      wait-for mkswap -L swap /dev/disk/by-partlabel/SWAP
+
 
       wait-for [ -b /dev/disk/by-partlabel/NIXOS ]
       mkfs.ext4 -L nixos /dev/disk/by-partlabel/NIXOS
 
       sync
+      wait-for [ -b /dev/disk/by-label/swap ]
+      swapon /dev/disk/by-label/swap
+
       wait-for [ -b /dev/disk/by-label/nixos ]
       mount /dev/disk/by-label/nixos /mnt
 
       mkdir /mnt/boot
       wait-for mount /dev/disk/by-label/boot /mnt/boot
+
 
       install -D ${./configuration.nix} /mnt/etc/nixos/configuration.nix
       install -D ${./hardware-configuration.nix} /mnt/etc/nixos/hardware-configuration.nix
