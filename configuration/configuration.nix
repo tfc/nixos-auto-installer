@@ -33,6 +33,7 @@
     vim
     wget
     tmux
+    unzip
   ];
 
   services.xserver = {
@@ -67,7 +68,11 @@
 
   users.users.nixcademy = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ];
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+      "kvm"
+    ];
     initialPassword = "nixcademy";
   };
 }
