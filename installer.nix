@@ -1,11 +1,28 @@
-{ config, pkgs, modulesPath, ... }:
+{ config, pkgs, lib, modulesPath, ... }:
 
 {
   imports = [
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
   ];
-  nixpkgs.config.allowUnfree = true;
+
+  isoImage.isoName = lib.mkForce "nixcademy-auto-installer-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.iso";
+  services.getty.helpLine = ''
+    ███╗   ██╗██╗██╗  ██╗ ██████╗ █████╗ ██████╗ ███████╗███╗   ███╗██╗   ██╗
+    ████╗  ██║██║╚██╗██╔╝██╔════╝██╔══██╗██╔══██╗██╔════╝████╗ ████║╚██╗ ██╔╝
+    ██╔██╗ ██║██║ ╚███╔╝ ██║     ███████║██║  ██║█████╗  ██╔████╔██║ ╚████╔╝
+    ██║╚██╗██║██║ ██╔██╗ ██║     ██╔══██║██║  ██║██╔══╝  ██║╚██╔╝██║  ╚██╔╝
+    ██║ ╚████║██║██╔╝ ██╗╚██████╗██║  ██║██████╔╝███████╗██║ ╚═╝ ██║   ██║
+    ╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═════╝ ╚══════╝╚═╝     ╚═╝   ╚═╝
+
+    Automatic Installer Go brrrrr
+  '';
+
+#  nixpkgs.config.allowUnfree = true;
   hardware.enableAllFirmware = true;
+
+  services.journald.console = "/dev/tty1";
+
+  nix.settings.substituters = lib.mkForce [];
 
   systemd.services.install = {
     description = "Bootstrap a NixOS installation";
@@ -14,7 +31,7 @@
     path = [ "/run/current-system/sw/" ];
     script = with pkgs; ''
       # this is just for debugging purposes, can be removed when it all works
-      echo 'journalctl -fb -n100 -uinstall' >>~nixos/.bash_history
+      echo 'journalctl -fb -n100 -uinstall' >> ~nixos/.bash_history
 
       set -euxo pipefail
 
@@ -89,4 +106,5 @@
       Type = "oneshot";
     };
   };
+
 }

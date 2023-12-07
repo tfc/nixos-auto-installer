@@ -3,67 +3,62 @@
 
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixpkgs.url = "github:nixos/nixpkgs";
-    pre-commit-hooks = {
-      url = "github:cachix/pre-commit-hooks.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs =
-    { self
-    , flake-parts
-    , nixpkgs
-    , pre-commit-hooks
-    }:
-    flake-parts.lib.mkFlake { inherit self; } {
+  outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" ];
-      perSystem = { config, system, ... }:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-          };
-        in
-        {
-          devShells.default = pkgs.mkShell {
-            shellHook = ''
-              ${config.checks.pre-commit-check.shellHook}
-            '';
-          };
+      perSystem = { config, system, pkgs, ... }: {
+        _module.args.pkgs = import inputs.nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        };
 
-          packages = {
-            default = config.packages.installer;
-            installer = (pkgs.nixos [ ./installer.nix ]).config.system.build.isoImage;
-            install-demo = pkgs.writeShellScript "install-demo" ''
-              set -euo pipefail
-              disk=root.img
-              if [ ! -f "$disk" ]; then
-                echo "Creating harddisk image root.img"
-                ${pkgs.qemu}/bin/qemu-img create -f qcow2 "$disk" 20G
-              fi
-              ${pkgs.qemu}/bin/qemu-system-x86_64 \
-                -cpu host \
-                -enable-kvm \
-                -m 2G \
-                -bios ${pkgs.OVMF.fd}/FV/OVMF.fd \
-                -cdrom ${config.packages.installer}/iso/*.iso \
-                -hda "$disk"
-            '';
-          };
+        devShells.default = pkgs.mkShell {
+          inherit (config.checks.pre-commit-check) shellHook;
+        };
 
-          checks = {
-            pre-commit-check = pre-commit-hooks.lib.${system}.run {
-              src = ./.;
-              hooks = {
-                deadnix.enable = true;
-                nixpkgs-fmt.enable = true;
-                shellcheck.enable = true;
-                shfmt.enable = true;
-                statix.enable = true;
-              };
+        packages = {
+          default = config.packages.installer;
+          installer =
+            let
+              evaled = pkgs.nixos [
+                ./installer.nix
+              ];
+            in
+            evaled.config.system.build.isoImage;
+          install-demo = pkgs.writeShellScript "install-demo" ''
+            set -euo pipefail
+            disk=root.img
+            if [ ! -f "$disk" ]; then
+              echo "Creating harddisk image root.img"
+              ${pkgs.qemu}/bin/qemu-img create -f qcow2 "$disk" 20G
+            fi
+            ${pkgs.qemu}/bin/qemu-system-x86_64 \
+              -cpu host \
+              -enable-kvm \
+              -m 2G \
+              -bios ${pkgs.OVMF.fd}/FV/OVMF.fd \
+              -cdrom ${config.packages.installer}/iso/*.iso \
+              -hda "$disk"
+          '';
+        };
+
+        checks = {
+          pre-commit-check = inputs.pre-commit-hooks.lib.${system}.run {
+            src = ./.;
+            hooks = {
+              deadnix.enable = true;
+              nixpkgs-fmt.enable = true;
+              shellcheck.enable = true;
+              shfmt.enable = true;
+              statix.enable = true;
             };
           };
         };
+      };
     };
 }
