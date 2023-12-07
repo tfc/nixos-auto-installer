@@ -22,14 +22,9 @@
         };
 
         packages = {
-          default = config.packages.installer;
-          installer =
-            let
-              evaled = pkgs.nixos [
-                ./installer.nix
-              ];
-            in
-            evaled.config.system.build.isoImage;
+          default = config.packages.installer-iso;
+          installer-iso = inputs.self.nixosConfigurations.installer.config.system.build.isoImage;
+
           install-demo = pkgs.writeShellScript "install-demo" ''
             set -euo pipefail
             disk=root.img
@@ -42,7 +37,7 @@
               -enable-kvm \
               -m 2G \
               -bios ${pkgs.OVMF.fd}/FV/OVMF.fd \
-              -cdrom ${config.packages.installer}/iso/*.iso \
+              -cdrom ${config.packages.installer-iso}/iso/*.iso \
               -hda "$disk"
           '';
         };
@@ -58,6 +53,12 @@
               statix.enable = true;
             };
           };
+        };
+      };
+      flake = {
+        nixosConfigurations.installer = inputs.nixpkgs.lib.nixosSystem rec {
+          system = "x86_64-linux";
+          modules = [ ./installer.nix ];
         };
       };
     };

@@ -17,7 +17,7 @@
     Automatic Installer Go brrrrr
   '';
 
-#  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.allowUnfree = true;
   hardware.enableAllFirmware = true;
 
   services.journald.console = "/dev/tty1";
@@ -80,18 +80,16 @@
       wait-for mount /dev/disk/by-label/boot /mnt/boot
 
 
-      install -D ${./configuration.nix} /mnt/etc/nixos/configuration.nix
-      install -D ${./hardware-configuration.nix} /mnt/etc/nixos/hardware-configuration.nix
-
-      #sed -i -E 's/(\w*)#installer-only /\1/' /mnt/etc/nixos/*
+      mkdir -p /mnt/etc/nixos
+      cp -r ${./configuration} /mnt/etc/nixos
+      chmod -R 755 /mnt/etc/nixos
 
       # add parameters so that nix does not try to contact a cache as we expect
       # to be offline anyway
       ${config.system.build.nixos-install}/bin/nixos-install \
         --system ${(pkgs.nixos [
-          ./configuration.nix
-          ./hardware-configuration.nix
-        ]).config.system.build.toplevel} \
+          ./configuration/configuration.nix
+          ]).config.system.build.toplevel} \
         --no-root-passwd \
         --cores 0
 
