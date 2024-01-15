@@ -12,6 +12,9 @@
     ./modules/save-space.nix
     ./modules/virtualization.nix
   ];
+
+  nixpkgs.config.allowUnfree = true;
+
   networking.hostName = "nixos-training";
 
   boot.initrd.systemd.enable = true;

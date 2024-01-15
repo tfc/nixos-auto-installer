@@ -1,5 +1,12 @@
 { config, pkgs, lib, modulesPath, ... }:
-
+let
+  # can't use pkgs.nixos because we're setting nixpkgs config settings
+  # (at least allowUnfree) in install config.
+  evaluatedSystem = import (pkgs.path + "/nixos/lib/eval-config.nix") {
+    system = "x86_64-linux";
+    modules = [ ./configuration/configuration.nix ];
+  };
+in
 {
   imports = [
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
@@ -81,20 +88,18 @@
 
 
       mkdir -p /mnt/etc/nixos
-      cp -r ${./configuration} /mnt/etc/nixos
+      cp -r ${./configuration}/* /mnt/etc/nixos/
       chmod -R 755 /mnt/etc/nixos
 
       # add parameters so that nix does not try to contact a cache as we expect
       # to be offline anyway
       ${config.system.build.nixos-install}/bin/nixos-install \
-        --system ${(pkgs.nixos [
-          ./configuration/configuration.nix
-          ]).config.system.build.toplevel} \
+        --system ${evaluatedSystem.config.system.build.toplevel} \
         --no-root-passwd \
         --cores 0
 
-      echo 'Shutting off in 1min'
-      ${systemd}/bin/shutdown +1
+      echo 'Done. Shutting off.'
+      ${systemd}/bin/systemctl poweroff
     '';
     environment = config.nix.envVars // {
       inherit (config.environment.sessionVariables) NIX_PATH;
