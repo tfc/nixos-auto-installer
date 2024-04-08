@@ -56,7 +56,7 @@
         };
       };
       flake = {
-        nixosConfigurations.installer = inputs.nixpkgs.lib.nixosSystem rec {
+        nixosConfigurations.installer = inputs.nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           modules = [ ./installer.nix ];
         };
