@@ -60,6 +60,10 @@
           system = "x86_64-linux";
           modules = [ ./installer.nix ];
         };
+        nixosConfigurations.installed = inputs.nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [ ./configuration/configuration.nix ];
+        };
       };
     };
 }
