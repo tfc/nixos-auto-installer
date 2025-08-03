@@ -24,8 +24,7 @@ The installer [partitions the disk](https://github.com/tfc/nixos-auto-installer/
 - 8 GiB swap partition
 - rest size ext4  nixos partition
 
-The `root` user is the only user on the system. It has no password for physical login.
-The only way to login is via SSH with pubkey authentication (see Customization in this README).
+The `root` user is the only user on the system. The password is `nixcademy`.
 
 Unfree modules for wifi are added in order to enable the machine's wifi on first boot.
 
@@ -33,13 +32,9 @@ Only SSH is installed as a service.
 
 ## Customization
 
-### SSH Access
-
-Add your SSH key [here](https://github.com/tfc/nixos-auto-installer/blob/main/configuration.nix#L28)
-
 ### WiFi
 
-Add a wifi config to `configuration.nix` to let the machine automatically into your wifi after installation:
+Add a wifi config to [`configuration.nix`](./configuration/configuration.nix) to let the machine automatically into your wifi after installation:
 
 ```nix
   networking.wireless = {
