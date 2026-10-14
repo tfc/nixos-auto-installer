@@ -3,12 +3,15 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./modules/desktop-responsiveness.nix
     ./modules/firmware.nix
-    ./modules/nix-unstable.nix
-    ./modules/flakes.nix
+    ./modules/nix.nix
     ./modules/nixcademy-branding.nix
+    ./modules/nixos-test-containers.nix
     ./modules/save-space.nix
+    ./modules/training-tools.nix
     ./modules/virtualization.nix
+    ./modules/zram.nix
   ];
 
   networking.hostName = "nixos-training";
@@ -30,14 +33,6 @@
       addresses = true;
     };
   };
-
-  environment.systemPackages = with pkgs; [
-    git
-    vim
-    wget
-    tmux
-    unzip
-  ];
 
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;

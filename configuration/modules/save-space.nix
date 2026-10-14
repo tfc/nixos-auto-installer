@@ -4,11 +4,6 @@
   boot.loader.systemd-boot.configurationLimit = lib.mkDefault 2;
   boot.tmp.cleanOnBoot = true;
 
-  nix = {
-    optimise.automatic = true;
-    gc.automatic = true;
-  };
-
   services.journald.settings.Journal = {
     SystemMaxUse = "250M";
     SystemMaxFileSize = "50M";
