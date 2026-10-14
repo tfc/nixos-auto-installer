@@ -14,7 +14,8 @@ The system content is customized for our trainings but can be adapted to somethi
 The created USB stick is destructive in the sense that it deletes everything on the disk without asking!
 
 1. Build the ISO image via `nix build`
-2. `dd` the ISO image over a USB stick
+2. `dd` the ISO image over a USB stick 
+   (`sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress conv=fsync oflag=direct`)
 3. Put the USB stick into a machine that is set up to boot via USB
 4. Let the machine boot and wait until it powers off again.
    (It typically takes ~5-20 minutes, depending on the speed of the USB port)
