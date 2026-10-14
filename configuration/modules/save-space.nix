@@ -1,6 +1,7 @@
-_:
+{ lib, ... }:
 
 {
+  boot.loader.systemd-boot.configurationLimit = lib.mkDefault 2;
   boot.tmp.cleanOnBoot = true;
 
   nix = {
@@ -8,8 +9,8 @@ _:
     gc.automatic = true;
   };
 
-  services.journald.extraConfig = ''
-    SystemMaxUse=250M
-    SystemMaxFileSize=50M
-  '';
+  services.journald.settings.Journal = {
+    SystemMaxUse = "250M";
+    SystemMaxFileSize = "50M";
+  };
 }

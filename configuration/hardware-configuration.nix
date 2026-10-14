@@ -7,18 +7,18 @@
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.enableAllFirmware = true;
 
   boot.loader.systemd-boot.enable = true;
 
-  boot.initrd.kernelModules = [
+  boot.kernelModules = [
     "kvm-intel"
+    "kvm-amd"
+  ];
+
+  boot.initrd.kernelModules = [
     "virtio_balloon"
     "virtio_console"
     "virtio_rng"
-  ];
-
-  boot.extraModulePackages = [
   ];
 
   boot.initrd.availableKernelModules = [

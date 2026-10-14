@@ -35,7 +35,10 @@ in
   nixpkgs.config.allowUnfree = true;
   hardware.enableAllFirmware = true;
 
-  services.journald.console = "/dev/tty1";
+  services.journald.settings.Journal = {
+    ForwardToConsole = true;
+    TTYPath = "/dev/tty1";
+  };
 
   nix.settings.substituters = lib.mkForce [ ];
 
@@ -63,7 +66,7 @@ in
       dev="/dev/$biggestBlockDevice"
 
       # the cryptic type stands for "EFI system partition"
-      ${utillinux}/bin/sfdisk --wipe=always "$dev" <<-END
+      ${util-linux}/bin/sfdisk --wipe=always "$dev" <<-END
         label: gpt
 
         name=BOOT, size=512MiB, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B

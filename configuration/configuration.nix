@@ -6,14 +6,10 @@
     ./modules/firmware.nix
     ./modules/nix-unstable.nix
     ./modules/flakes.nix
-    ./modules/nixcademy-gdm-logo.nix
-    ./modules/nixcademy-gnome-background.nix
-    ./modules/nixcademy-plymouth-logo.nix
+    ./modules/nixcademy-branding.nix
     ./modules/save-space.nix
     ./modules/virtualization.nix
   ];
-
-  nixpkgs.config.allowUnfree = true;
 
   networking.hostName = "nixos-training";
 
@@ -43,23 +39,8 @@
     unzip
   ];
 
-  services.xserver.enable = true;
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
-  services.libinput.enable = true;
-
-  boot.plymouth.enable = true;
-
-  customization = {
-    gdm-logo.enable = true;
-    gnome-background.enable = true;
-    plymouth-logo.enable = true;
-  };
-
-  hardware.graphics = {
-    enable = true;
-    enable32Bit = true;
-  };
 
   security.sudo.wheelNeedsPassword = false;
   services.openssh = {
@@ -67,7 +48,7 @@
     settings.PermitRootLogin = "yes";
   };
   users.mutableUsers = false;
-  users.extraUsers.root.password = "nixcademy";
+  users.users.root.password = "nixcademy";
 
   users.users.nixcademy = {
     isNormalUser = true;
@@ -75,7 +56,10 @@
       "wheel"
       "networkmanager"
       "kvm"
+      "libvirtd"
     ];
     initialPassword = "nixcademy";
   };
+
+  system.stateVersion = "26.11";
 }
