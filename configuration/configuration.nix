@@ -5,6 +5,7 @@
     ./hardware-configuration.nix
     ./modules/desktop-responsiveness.nix
     ./modules/firmware.nix
+    ./modules/german.nix # for trainings in Germany
     ./modules/nix.nix
     ./modules/nixcademy-branding.nix
     ./modules/nixos-test-containers.nix
@@ -15,6 +16,12 @@
   ];
 
   networking.hostName = "nixos-training";
+
+  programs.dconf.profiles.user.databases = [
+    {
+      settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
+    }
+  ];
 
   boot.initrd.systemd.enable = true;
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -44,6 +51,8 @@
   };
   users.mutableUsers = false;
   users.users.root.password = "nixcademy";
+
+  customization.user-icon.users = [ "nixcademy" ];
 
   users.users.nixcademy = {
     isNormalUser = true;

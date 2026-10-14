@@ -55,6 +55,23 @@ let
       gsettings reset org.gnome.desktop.background picture-uri-dark
     '';
   };
+
+  # The logo's snowflake, white on a square background that GDM crops round.
+  userIcon =
+    pkgs.runCommand "user-icon.png"
+      {
+        HOME = "/build";
+        nativeBuildInputs = [
+          pkgs.inkscape
+          pkgs.imagemagick
+        ];
+      }
+      ''
+        inkscape --export-id=NIXSnowflake --export-id-only -h 150 \
+          -o snowflake.png ${cfg.user-icon.logoPath}
+        magick snowflake.png -background '${cfg.user-icon.backgroundColor}' \
+          -gravity center -extent 256x256 "$out"
+      '';
 in
 {
   options.customization = {
@@ -124,6 +141,26 @@ in
         description = "Path to the logo file (SVG)";
       };
     };
+    user-icon = {
+      users = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = ''
+          Users that get the snowflake as their initial account picture.
+          Pictures the users choose themselves are not overwritten.
+        '';
+      };
+      logoPath = lib.mkOption {
+        type = lib.types.path;
+        default = ./artwork/logo-vertical-white.svg;
+        description = "Path to the logo file (SVG) containing an object with id NIXSnowflake";
+      };
+      backgroundColor = lib.mkOption {
+        type = lib.types.str;
+        default = "#5277c3";
+        description = "HTML color code for the background behind the snowflake";
+      };
+    };
   };
 
   config = lib.mkMerge [
@@ -162,5 +199,12 @@ in
         themePackages = [ customBreeze ];
       };
     })
+    {
+      # AccountsService provides the pictures GDM shows. `f` only creates the
+      # file if it is missing, so it stays writable for the user's own choice.
+      systemd.tmpfiles.rules = map (
+        user: "f /var/lib/AccountsService/users/${user} 0600 root root - [User]\\nIcon=${userIcon}\\n"
+      ) cfg.user-icon.users;
+    }
   ];
 }
