@@ -59,3 +59,8 @@ Add a wifi config to [`configuration.nix`](./configuration/configuration.nix) to
 
 There are different ways to add passwords to a machine, and _this_ is not a secure one as the password will be stored in the nix store.
 (Which is fine for _my_ purposes, but maybe not yours)
+
+## License
+
+The code in this repository is licensed under the [MIT License](./LICENSE).
+The logos and wallpapers in [`configuration/modules/artwork`](./configuration/modules/artwork) are trademarks of Applicative Systems and are not covered by this license.
