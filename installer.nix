@@ -18,6 +18,8 @@ in
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
   ];
 
+  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+
   image.fileName = lib.mkForce "nixcademy-auto-installer-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.iso";
   services.getty.helpLine = ''
     ███╗   ██╗██╗██╗  ██╗ ██████╗ █████╗ ██████╗ ███████╗███╗   ███╗██╗   ██╗

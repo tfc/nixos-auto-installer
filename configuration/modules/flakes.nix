@@ -1,4 +1,3 @@
-_:
 {
   nix = {
     extraOptions = ''
