@@ -36,17 +36,19 @@
     "xhci_pci"
   ];
 
+  # Partitions created by disko.nix in the installer
   fileSystems."/boot" = {
-    device = "/dev/disk/by-label/boot";
+    device = "/dev/disk/by-partlabel/disk-main-ESP";
     fsType = "vfat";
+    options = [ "umask=0077" ];
   };
 
   fileSystems."/" = {
-    device = "/dev/disk/by-label/nixos";
+    device = "/dev/disk/by-partlabel/disk-main-root";
     fsType = "ext4";
   };
 
-  swapDevices = [ { device = "/dev/disk/by-label/swap"; } ];
+  swapDevices = [ { device = "/dev/disk/by-partlabel/disk-main-swap"; } ];
 
   networking.useDHCP = lib.mkDefault true;
 }

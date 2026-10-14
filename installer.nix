@@ -9,13 +9,48 @@ let
   # can't use pkgs.nixos because we're setting nixpkgs config settings
   # (at least allowUnfree) in install config.
   evaluatedSystem = import (pkgs.path + "/nixos/lib/eval-config.nix") {
-    system = "x86_64-linux";
+    system = null; # nixpkgs.hostPlatform is set in hardware-configuration.nix
     modules = [ ./configuration/configuration.nix ];
   };
+
+  select-install-disk = pkgs.writeShellApplication {
+    name = "select-install-disk";
+    runtimeInputs = [
+      pkgs.jq
+      pkgs.util-linux
+    ];
+    text = builtins.readFile ./select-install-disk.sh;
+  };
+
+  # The installed system doesn't import disko, so its mounts are written by
+  # hand. Make sure they match what disko creates.
+  # disko returns its config as lib.mkMerge values
+  unmerge = x: if x._type or null == "merge" then x.contents else [ x ];
+  diskoFileSystems = lib.mergeAttrsList (unmerge config.disko.devices._config.fileSystems);
+  diskoSwapDevices = lib.concatLists (unmerge config.disko.devices._config.swapDevices);
+  installed = evaluatedSystem.config;
+  mountsMatch =
+    lib.all (
+      mp:
+      diskoFileSystems.${mp}.device == installed.fileSystems.${mp}.device
+      && diskoFileSystems.${mp}.fsType == installed.fileSystems.${mp}.fsType
+    ) (builtins.attrNames diskoFileSystems)
+    && map (s: s.device) diskoSwapDevices == map (s: s.device) installed.swapDevices;
 in
 {
   imports = [
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
+    ./disko.nix
+  ];
+
+  # Only use disko's format/mount scripts, don't mount anything on the ISO itself.
+  disko.enableConfig = false;
+
+  assertions = [
+    {
+      assertion = mountsMatch;
+      message = "fileSystems/swapDevices in configuration/hardware-configuration.nix don't match disko.nix";
+    }
   ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
@@ -47,59 +82,32 @@ in
     wantedBy = [ "multi-user.target" ];
     after = [ "polkit.service" ];
     path = [ "/run/current-system/sw/" ];
-    script = with pkgs; ''
+    script = ''
       # this is just for debugging purposes, can be removed when it all works
       echo 'journalctl -fb -n100 -uinstall' >> ~nixos/.bash_history
 
       set -euxo pipefail
 
-      wait-for() {
-        for _ in seq 10; do
-          if $@; then
-            break
-          fi
-          sleep 1
-        done
-      }
+      INSTALL_DISK=$(${lib.getExe select-install-disk})
+      if [ -z "$INSTALL_DISK" ]; then
+        echo 'No built-in disk found, refusing to install. Block devices:'
+        lsblk -o NAME,TYPE,SIZE,RM,HOTPLUG,RO,TRAN,MODEL
+        exit 1
+      fi
+      export INSTALL_DISK
 
-      biggestBlockDevice=$(${pkgs.util-linux}/bin/lsblk --bytes --json | ${pkgs.jq}/bin/jq -r '.blockdevices | map(select (.type = "disk")) | sort_by(.size) | reverse | .[0].name')
-      dev="/dev/$biggestBlockDevice"
+      echo "Installing to /dev/$INSTALL_DISK, ALL DATA ON IT WILL BE LOST:"
+      lsblk -o NAME,SIZE,TRAN,MODEL "/dev/$INSTALL_DISK"
+      for i in $(seq 10 -1 1); do
+        echo "Wiping in $i seconds, pull the USB stick to abort..."
+        sleep 1
+      done
 
-      # the cryptic type stands for "EFI system partition"
-      ${util-linux}/bin/sfdisk --wipe=always "$dev" <<-END
-        label: gpt
-
-        name=BOOT, size=512MiB, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B
-        name=SWAP, size=8GiB, type=0657FD6D-A4AB-43C4-84E5-0933C84B4F4F
-        name=NIXOS
-      END
-
-      sync
-
-      wait-for [ -b /dev/disk/by-partlabel/BOOT ]
-      wait-for mkfs.fat -F 32 -n boot /dev/disk/by-partlabel/BOOT
-
-      wait-for [ -b /dev/disk/by-partlabel/SWAP ]
-      wait-for mkswap -L swap /dev/disk/by-partlabel/SWAP
-
-
-      wait-for [ -b /dev/disk/by-partlabel/NIXOS ]
-      mkfs.ext4 -L nixos /dev/disk/by-partlabel/NIXOS
-
-      sync
-      wait-for [ -b /dev/disk/by-label/swap ]
-      swapon /dev/disk/by-label/swap
-
-      wait-for [ -b /dev/disk/by-label/nixos ]
-      mount /dev/disk/by-label/nixos /mnt
-
-      mkdir /mnt/boot
-      wait-for mount /dev/disk/by-label/boot /mnt/boot
-
+      ${config.system.build.destroyFormatMount}/bin/disko-destroy-format-mount --yes-wipe-all-disks
 
       mkdir -p /mnt/etc/nixos
       cp -r ${./configuration}/* /mnt/etc/nixos/
-      chmod -R 755 /mnt/etc/nixos
+      chmod -R u+w /mnt/etc/nixos
 
       # add parameters so that nix does not try to contact a cache as we expect
       # to be offline anyway
@@ -109,7 +117,7 @@ in
         --cores 0
 
       echo 'Done. Shutting off.'
-      ${systemd}/bin/systemctl poweroff
+      systemctl poweroff
     '';
     environment = config.nix.envVars // {
       inherit (config.environment.sessionVariables) NIX_PATH;

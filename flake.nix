@@ -3,11 +3,17 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    disko.url = "github:nix-community/disko";
+    disko.flake = false;
   };
 
   outputs = inputs: {
     nixosConfigurations.installer = inputs.nixpkgs.lib.nixosSystem {
-      modules = [ ./installer.nix ];
+      modules = [
+        ./installer.nix
+        "${inputs.disko}/module.nix"
+      ];
     };
     nixosConfigurations.installed = inputs.nixpkgs.lib.nixosSystem {
       modules = [ ./configuration/configuration.nix ];
@@ -22,7 +28,7 @@
         disk=root.img
         if [ ! -f "$disk" ]; then
           echo "Creating harddisk image root.img"
-          ${pkgs.qemu}/bin/qemu-img create -f qcow2 "$disk" 20G
+          ${pkgs.qemu}/bin/qemu-img create -f qcow2 "$disk" 40G
         fi
         ${pkgs.qemu}/bin/qemu-system-x86_64 \
           -machine q35 -accel kvm \

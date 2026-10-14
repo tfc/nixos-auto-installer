@@ -131,7 +131,7 @@ in
       programs.dconf.profiles.gdm.databases = [
         {
           settings."org/gnome/login-screen" = {
-            logo = toString cfg.gdm-logo.logoPath;
+            logo = "${cfg.gdm-logo.logoPath}";
           };
         }
       ];
