@@ -41,6 +41,7 @@ in
   imports = [
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
     ./disko.nix
+    ./configuration/modules/size-reduction.nix
   ];
 
   # Only use disko's format/mount scripts, don't mount anything on the ISO itself.

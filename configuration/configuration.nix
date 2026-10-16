@@ -10,6 +10,7 @@
     ./modules/nixcademy-branding.nix
     ./modules/nixos-test-containers.nix
     ./modules/save-space.nix
+    ./modules/size-reduction.nix
     ./modules/training-tools.nix
     ./modules/virtualization.nix
     ./modules/zram.nix
