@@ -23,6 +23,23 @@
       default = inputs.self.packages.${system}.installer-iso;
       installer-iso = inputs.self.nixosConfigurations.installer.config.system.build.isoImage;
 
+      flash-iso = pkgs.writeShellApplication {
+        name = "flash-iso";
+        runtimeInputs = with pkgs; [
+          coreutils
+          jq
+          pv
+          util-linux
+        ];
+        # sudo isn't a runtime input: it must be the setuid one from $PATH.
+        text = ''
+          ISO=${
+            inputs.self.packages.${system}.installer-iso
+          }/${inputs.self.nixosConfigurations.installer.config.image.filePath}
+        ''
+        + builtins.readFile ./flash-iso.sh;
+      };
+
       install-demo = pkgs.writeShellScriptBin "install-demo" ''
         set -euo pipefail
         disk=root.img

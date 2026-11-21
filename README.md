@@ -13,13 +13,17 @@ The system content is customized for our trainings but can be adapted to somethi
 **Warning:**
 The created USB stick is destructive in the sense that it deletes everything on the disk without asking!
 
-1. Build the ISO image via `nix build`
-2. `dd` the ISO image over a USB stick
-   (`sudo dd if=result/iso/*.iso of=/dev/sdX bs=4M status=progress conv=fsync oflag=direct`)
-3. Put the USB stick into a machine that is set up to boot via USB
-4. Let the machine boot and wait until it powers off again.
+1. Plug in a USB stick and run `nix run .#flash-iso`.
+   It builds the ISO, lists all disks, picks the USB stick, and flashes it after you confirm with `y`.
+   If several sticks are plugged in, choose one explicitly: `nix run .#flash-iso -- /dev/sdX`.
+   (To only build the ISO image, run `nix build`.)
+2. Put the USB stick into a machine that is set up to boot via USB
+3. Let the machine boot and wait until it powers off again.
    (It typically takes ~5-20 minutes, depending on the speed of the USB port)
-5. NixOS is now installed.
+4. NixOS is now installed.
+
+To try the installer in a VM first, run `nix run`.
+It installs into `root.img` and boots the installed system on later runs.
 
 The system also carries its own NixOS configuration.
 This way you can `nixos-rebuild` locally for updates and changes.
@@ -33,7 +37,7 @@ It shows the chosen disk and waits 10 seconds before wiping it, so pulling the U
 The disk is then partitioned like this:
 
 - 512 MiB fat32 boot partition
-- 8 GiB swap partition
+- 8 GiB partition used as writeback device for zram swap (cold compressed pages are moved there)
 - rest size ext4 nixos partition
 
 The system provides a user `nixcademy`.
