@@ -17,9 +17,12 @@
             mountOptions = [ "umask=0077" ];
           };
         };
-        swap = {
+        # Raw partition used as zram's writeback device (see
+        # configuration/modules/zram.nix), not as swap. Without content it
+        # gets the generic "Linux filesystem" type (8300), so
+        # systemd-gpt-auto-generator doesn't swapon it before zram claims it.
+        zram-writeback = {
           size = "8G";
-          content.type = "swap";
         };
         root = {
           size = "100%";

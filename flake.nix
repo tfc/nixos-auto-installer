@@ -23,23 +23,41 @@
       default = inputs.self.packages.${system}.installer-iso;
       installer-iso = inputs.self.nixosConfigurations.installer.config.system.build.isoImage;
 
-      install-demo = pkgs.writeShellScript "install-demo" ''
+      install-demo = pkgs.writeShellScriptBin "install-demo" ''
         set -euo pipefail
         disk=root.img
         if [ ! -f "$disk" ]; then
           echo "Creating harddisk image root.img"
           ${pkgs.qemu}/bin/qemu-img create -f qcow2 "$disk" 40G
+        else
+          echo "Reusing existing disk"
         fi
+        # Both stay attached: OVMF tries the disk first and falls through to
+        # the installer ISO as long as the disk has no bootloader, so the
+        # first run installs and later runs boot the installed system.
         ${pkgs.qemu}/bin/qemu-system-x86_64 \
           -machine q35 -accel kvm \
           -cpu host \
-          -enable-kvm \
           -m 2G \
           -smp 4 \
           -bios ${pkgs.OVMF.fd}/FV/OVMF.fd \
-          -cdrom ${inputs.self.packages.${system}.installer-iso}/iso/*.iso \
-          -hda "$disk"
+          -drive if=none,id=disk,format=qcow2,file="$disk" \
+          -device ide-hd,drive=disk,bus=ide.0,bootindex=1 \
+          -drive if=none,id=iso,media=cdrom,readonly=on,file=${
+            inputs.self.packages.${system}.installer-iso
+          }/${inputs.self.nixosConfigurations.installer.config.image.filePath} \
+          -device ide-cd,drive=iso,bus=ide.1,bootindex=2 \
+          "$@"
       '';
+    }) inputs.nixpkgs.legacyPackages;
+
+    # `nix run` boots the installer ISO in a VM, `nix build` still builds the ISO.
+    apps = builtins.mapAttrs (system: _: {
+      default = {
+        type = "app";
+        program = inputs.nixpkgs.lib.getExe inputs.self.packages.${system}.install-demo;
+        meta.description = "Boot root.img in a QEMU VM, installing it from the auto-installer ISO first if it isn't bootable yet";
+      };
     }) inputs.nixpkgs.legacyPackages;
 
     devShells = builtins.mapAttrs (system: pkgs: {

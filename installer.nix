@@ -27,7 +27,7 @@ let
   # disko returns its config as lib.mkMerge values
   unmerge = x: if x._type or null == "merge" then x.contents else [ x ];
   diskoFileSystems = lib.mergeAttrsList (unmerge config.disko.devices._config.fileSystems);
-  diskoSwapDevices = lib.concatLists (unmerge config.disko.devices._config.swapDevices);
+  diskoSwapDevices = lib.concatLists (unmerge (config.disko.devices._config.swapDevices or [ ]));
   installed = evaluatedSystem.config;
   mountsMatch =
     lib.all (
@@ -35,7 +35,10 @@ let
       diskoFileSystems.${mp}.device == installed.fileSystems.${mp}.device
       && diskoFileSystems.${mp}.fsType == installed.fileSystems.${mp}.fsType
     ) (builtins.attrNames diskoFileSystems)
-    && map (s: s.device) diskoSwapDevices == map (s: s.device) installed.swapDevices;
+    && map (s: s.device) diskoSwapDevices == map (s: s.device) installed.swapDevices
+    &&
+      installed.zramSwap.writebackDevice
+      == config.disko.devices.disk.main.content.partitions.zram-writeback.device;
 in
 {
   imports = [
@@ -50,13 +53,13 @@ in
   assertions = [
     {
       assertion = mountsMatch;
-      message = "fileSystems/swapDevices in configuration/hardware-configuration.nix don't match disko.nix";
+      message = "fileSystems/swapDevices/zramSwap.writebackDevice in configuration/ don't match disko.nix";
     }
   ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 
-  image.fileName = lib.mkForce "nixcademy-auto-installer-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}.iso";
+  image.baseName = lib.mkForce "nixcademy-auto-installer-${config.system.nixos.label}-${pkgs.stdenv.hostPlatform.system}";
   services.getty.helpLine = ''
     ███╗   ██╗██╗██╗  ██╗ ██████╗ █████╗ ██████╗ ███████╗███╗   ███╗██╗   ██╗
     ████╗  ██║██║╚██╗██╔╝██╔════╝██╔══██╗██╔══██╗██╔════╝████╗ ████║╚██╗ ██╔╝

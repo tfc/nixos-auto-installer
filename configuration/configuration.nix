@@ -24,7 +24,6 @@
     }
   ];
 
-  boot.initrd.systemd.enable = true;
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   networking.firewall.logRefusedConnections = false;
@@ -32,16 +31,15 @@
 
   services.avahi = {
     enable = true;
-    ipv4 = true;
-    ipv6 = true;
     nssmdns4 = true;
-    publish = {
-      enable = true;
-      domain = true;
-      addresses = true;
+    settings.publish = {
+      disable-publishing = false;
+      publish-domain = true;
+      publish-addresses = true;
     };
   };
 
+  services.bootvine.enable = true;
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 

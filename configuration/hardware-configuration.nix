@@ -48,7 +48,8 @@
     fsType = "ext4";
   };
 
-  swapDevices = [ { device = "/dev/disk/by-partlabel/disk-main-swap"; } ];
+  # No swapDevices: the disk-main-zram-writeback partition is zram's
+  # writeback device, see modules/zram.nix.
 
   networking.useDHCP = lib.mkDefault true;
 }
